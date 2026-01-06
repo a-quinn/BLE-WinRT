@@ -1,0 +1,13 @@
+if(NOT BLE_WINRT_BUILD_SHARED)
+	add_subdirectory(static_link_0)
+	add_subdirectory(static_link_1)
+	add_subdirectory(static_link_2)
+	add_subdirectory(static_link_3)
+	add_subdirectory(static_link_4)
+endif()
+
+if(BLE_WINRT_BUILD_SHARED)
+	add_subdirectory(dynamic_link_0)
+	add_subdirectory(dynamic_link_1)
+	add_subdirectory(dynamic_link_2)
+endif()
