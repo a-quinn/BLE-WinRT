@@ -43,6 +43,9 @@ struct BLEWinRTContext::Impl {// All previous global variables become members
     std::list<Subscription*> subscriptions;
     std::mutex subscribeQueueLock;
     std::condition_variable subscribeQueueSignal;
+    std::condition_variable unsubscribeQueueSignal;
+	bool subscribeFinished = false;
+	bool unsubscribeFinished = false;
 
 	mutex readLock;
 	condition_variable readSignal;
@@ -210,6 +213,19 @@ bool BLEWinRTContext::QuittableWait(condition_variable& signal, unique_lock<mute
 			return true;
 	}
 	signal.wait(waitLock);
+	lock_guard quit_lock(pImpl->quitLock);
+	return pImpl->quitFlag;
+}
+bool BLEWinRTContext::QuittableWaitPredicate(condition_variable& signal, unique_lock<mutex>& waitLock, bool& predicate){
+	{
+		lock_guard quit_lock(pImpl->quitLock);
+		if (pImpl->quitFlag)
+			return true;
+	}
+	signal.wait(waitLock, [&predicate, this](){
+		lock_guard quit_lock(pImpl->quitLock);
+		return pImpl->quitFlag || predicate;
+	});
 	lock_guard quit_lock(pImpl->quitLock);
 	return pImpl->quitFlag;
 }
@@ -527,13 +543,15 @@ fire_and_forget BLEWinRTContext::SubscribeCharacteristicAsync(wchar_t* deviceId,
 	{
 		saveError(L"%s:%d SubscribeCharacteristicAsync catch: %s", __WFILE__, __LINE__, ex.message().c_str());
 	}
+	pImpl->subscribeFinished = true;
 	pImpl->subscribeQueueSignal.notify_one();
 }
 bool BLEWinRTContext::SubscribeCharacteristic(wchar_t* deviceId, wchar_t* serviceId, wchar_t* characteristicId, bool block) {
 	unique_lock<mutex> lock(pImpl->subscribeQueueLock);
 	bool result = false;
+	pImpl->subscribeFinished = false;
 	SubscribeCharacteristicAsync(deviceId, serviceId, characteristicId, block ? &result : 0);
-	if (block && QuittableWait(pImpl->subscribeQueueSignal, lock))
+	if (block && QuittableWaitPredicate(pImpl->subscribeQueueSignal, lock, pImpl->subscribeFinished))
 		return false;
 
 	return result;
@@ -562,13 +580,15 @@ fire_and_forget BLEWinRTContext::UnsubscribeCharacteristicAsync(wchar_t* deviceI
 	{
 		saveError(L"%s:%d UnsubscribeCharacteristicAsync catch: %s", __WFILE__, __LINE__, ex.message().c_str());
 	}
-	pImpl->subscribeQueueSignal.notify_one();
+	pImpl->unsubscribeFinished = true;
+	pImpl->unsubscribeQueueSignal.notify_one();
 }
 bool BLEWinRTContext::UnsubscribeCharacteristic(wchar_t* deviceId, wchar_t* serviceId, wchar_t* characteristicId, bool block) {
 	unique_lock<mutex> lock(pImpl->subscribeQueueLock);
 	bool result = false;
+	pImpl->unsubscribeFinished = false;
 	UnsubscribeCharacteristicAsync(deviceId, serviceId, characteristicId, block ? &result : 0);
-	if (block && QuittableWait(pImpl->subscribeQueueSignal, lock))
+	if (block && QuittableWaitPredicate(pImpl->unsubscribeQueueSignal, lock, pImpl->unsubscribeFinished))
 		return false;
 
 	return result;
@@ -716,6 +736,7 @@ void BLEWinRTContext::Quit() {
 		pImpl->characteristicQueue = {};
 	}
 	pImpl->subscribeQueueSignal.notify_one();
+	pImpl->unsubscribeQueueSignal.notify_one();
 	{
 		lock_guard lock(pImpl->subscribeQueueLock);
 		for (auto subscription : pImpl->subscriptions)

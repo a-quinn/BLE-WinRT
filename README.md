@@ -9,14 +9,14 @@ You need CMake and a compatible Visual Studio generator (e.g., Visual Studio 201
 ### Static build (static tests, no DLL required)
 
 ```powershell
-cmake -S . -B build_static -G "Visual Studio 16 2019" -DBLE_WINRT_BUILD_SHARED=OFF
+cmake -S . -B build_static -G "Visual Studio 17 2022" -DBLE_WINRT_BUILD_SHARED=OFF
 cmake --build build_static --config Release
 ```
 
 ### Dynamic build (dynamic tests, DLL required)
 
 ```powershell
-cmake -S . -B build_dynamic -G "Visual Studio 16 2019" -DBLE_WINRT_BUILD_SHARED=ON
+cmake -S . -B build_dynamic -G "Visual Studio 17 2022" -DBLE_WINRT_BUILD_SHARED=ON
 cmake --build build_dynamic --config Release
 ```
 

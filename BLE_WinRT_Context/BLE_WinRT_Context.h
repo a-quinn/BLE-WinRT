@@ -4,10 +4,12 @@
 #include <condition_variable>
 #include "pch.h"
 
-#ifdef BLE_WINRT_CONTEXT_DLL_EXPORTS
-#define DLL_API __declspec(dllexport)
+#if defined(BLE_WINRT_CONTEXT_DLL_EXPORTS)
+    #define DLL_API __declspec(dllexport)
+#elif defined(BLE_WINRT_CONTEXT_DLL_IMPORTS)
+    #define DLL_API __declspec(dllimport)
 #else
-#define DLL_API __declspec(dllimport)
+    #define DLL_API
 #endif
 
 using namespace std;
@@ -76,7 +78,6 @@ public:
     void Quit();
     void GetError(ErrorMessage* buf);
     void ClearCache(bool onlyServices = false);
-
 private:
     struct Impl; // Forward declaration
     Impl* pImpl; // Pointer to implementation
@@ -87,6 +88,7 @@ private:
     IAsyncOperation<GattCharacteristic> retrieveCharacteristic(wchar_t* deviceId, wchar_t* serviceId, wchar_t* characteristicId);
 
     bool QuittableWait(condition_variable& signal, unique_lock<mutex>& waitLock);
+    bool QuittableWaitPredicate(condition_variable& signal, unique_lock<mutex>& waitLock, bool& predicate);
     void DeviceWatcher_Updated(DeviceWatcher sender, DeviceInformationUpdate deviceInfoUpdate);
     void DeviceWatcher_Added(DeviceWatcher sender, DeviceInformation deviceInfo);
     void DeviceWatcher_EnumerationCompleted(DeviceWatcher sender, IInspectable const&);
