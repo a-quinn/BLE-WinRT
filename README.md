@@ -1,10 +1,10 @@
 # BLE-WinRT
 
-This project is a cleaned-up CMake-based version of [BleWinrtDll](https://github.com/adabru/BleWinrtDll), providing a C++ library for Bluetooth Low Energy (BLE) using WinRT APIs. The library can be built as a static or shared library and included in other projects. Thank you [Adam Brunnmeier](https://github.com/adabru) for creating it.
+This project is a cleaned-up CMake-based version of [BleWinrtDll](https://github.com/adabru/BleWinrtDll), providing a C++ library for Bluetooth Low Energy (BLE) using WinRT APIs. The library can be built as a static or shared library and included in other projects. There are two versions of the library: `BLE_WinRT` (global context) and `BLE_WinRT_Context` (non-global context). The test projects demonstrate how to use both versions. There are strange behaviors with the Bluetooth WinRT APIs relating to the scope and lifetime of the context, which is why both versions are provided.
 
 ## Building
 
-You need CMake and a compatible Visual Studio generator (e.g., Visual Studio 2019 or newer).
+You need CMake and a compatible Visual Studio (e.g., Visual Studio 2019 or newer).
 
 ### Static build (static tests, no DLL required)
 
@@ -43,7 +43,7 @@ You can include `BLE_WinRT` or `BLE_WinRT_Context` as a subdirectory in your own
 
 ## License
 
-Original code: WTFPL. See [BleWinrtDll](https://github.com/adabru/BleWinrtDll).
+Original code: WTFPL. See [BleWinrtDll](https://github.com/adabru/BleWinrtDll). Credit to [Adam Brunnmeier](https://github.com/adabru) for original code.
 
 ## Useful links to references for odd behaviour
 https://learn.microsoft.com/en-us/answers/questions/701689/getcharacteristicsasync-function-gets-stuck-in-win
